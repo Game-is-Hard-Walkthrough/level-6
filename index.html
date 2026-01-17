@@ -1,0 +1,404 @@
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Game is Hard — Level 6 (Mini Clone)</title>
+  <style>
+    :root {
+      --bg: #2f3136;
+      --text: #ff7a8a;
+      --muted: rgba(255,255,255,0.65);
+      --panel: rgba(0,0,0,0.45);
+      --btn: rgba(255,255,255,0.12);
+      --btn2: rgba(255,255,255,0.18);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      height: 100vh;
+      background: var(--bg);
+      color: white;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .hud {
+      position: absolute;
+      inset: 0;
+      padding: 18px 16px 16px;
+    }
+
+    /* Top-left icon */
+    .icon-wrap {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease;
+    }
+    .icon-wrap:active { transform: scale(0.97); }
+
+    .hamburger {
+      width: 20px;
+      height: 14px;
+      display: grid;
+      gap: 3px;
+    }
+    .hamburger span {
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.9);
+      display: block;
+    }
+
+    /* When "flipped", hint that THIS is the button */
+    .flipped .icon-wrap {
+      background: rgba(123, 255, 186, 0.18);
+      box-shadow: 0 0 0 2px rgba(123, 255, 186, 0.22) inset;
+      animation: pulse 0.9s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    .center {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .level {
+      color: var(--text);
+      font-weight: 700;
+      font-size: 44px;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .sub {
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .hint {
+      margin-top: 18px;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .bar {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: var(--btn);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.85);
+      max-width: 100%;
+    }
+
+    .btn {
+      border: 1px solid rgba(255,255,255,0.14);
+      background: var(--btn2);
+      color: white;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn:active { transform: scale(0.99); }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: none;
+      place-items: center;
+      padding: 20px;
+    }
+    .overlay.show { display: grid; }
+
+    .panel {
+      width: min(520px, 92vw);
+      background: rgba(20,20,20,0.75);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .panel p {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.45;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .success {
+      color: rgba(123, 255, 186, 0.95);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .small {
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="hud" id="root">
+    <div class="icon-wrap" id="menuBtn" aria-label="menu button" title="menu">
+      <div class="hamburger" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+
+    <div class="center">
+      <div>
+        <div class="level">level 9</div>
+        <div class="sub">something is wrong!</div>
+        <div class="hint" id="hint">
+          Try the obvious stuff. It won’t help.<br/>
+          (Yes, this is a phone puzzle.)
+        </div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="chip" id="status">Status: waiting for a flip…</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" id="enableBtn">Enable Motion</button>
+        <button class="btn" id="simulateBtn">Simulate Flip</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="panel">
+        <h2 id="overlayTitle">Paused</h2>
+        <p id="overlayText">That icon is just a menu… unless you do something dumb with the phone.</p>
+        <div class="row">
+          <button class="btn" id="closeOverlay">Close</button>
+        </div>
+        <p class="small" style="margin-top:10px;">
+          Tip: on some mobile browsers, motion/orientation needs permission first.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Mini-clone goal:
+    // - Show "level 9 something is wrong!"
+    // - Detect an upside-down flip (best-effort across browsers)
+    // - Only then allow the top-left icon to clear the level
+
+    const root = document.getElementById("root");
+    const statusEl = document.getElementById("status");
+    const hintEl = document.getElementById("hint");
+    const enableBtn = document.getElementById("enableBtn");
+    const simulateBtn = document.getElementById("simulateBtn");
+    const menuBtn = document.getElementById("menuBtn");
+
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const closeOverlay = document.getElementById("closeOverlay");
+
+    let flipped = false;
+    let cleared = false;
+
+    // Orientation baselines for "rotate 180° around Z" detection when angle APIs are missing
+    let baseAlpha = null;
+    let lastAlpha = null;
+
+    function norm360(x) {
+      let v = x % 360;
+      if (v < 0) v += 360;
+      return v;
+    }
+
+    function angleDiff(a, b) {
+      // smallest diff between degrees on a circle
+      const d = Math.abs(norm360(a) - norm360(b));
+      return Math.min(d, 360 - d);
+    }
+
+    function setFlipped(next) {
+      if (cleared) return;
+      if (flipped === next) return;
+      flipped = next;
+
+      if (flipped) {
+        root.classList.add("flipped");
+        statusEl.textContent = "Status: upside down detected. Tap the top-left icon.";
+        hintEl.innerHTML = "Nice. Keep it upside down.<br/>Now tap the top-left icon.";
+      } else {
+        root.classList.remove("flipped");
+        statusEl.textContent = "Status: waiting for a flip…";
+        hintEl.innerHTML = "Try the obvious stuff. It won’t help.<br/>(Yes, this is a phone puzzle.)";
+      }
+    }
+
+    function clearLevel() {
+      cleared = true;
+      root.classList.remove("flipped");
+      statusEl.innerHTML = 'Status: <span class="success">CLEARED</span>';
+      hintEl.innerHTML = '<span class="success">Level passed.</span><br/>Reload to play again.';
+      overlayTitle.textContent = "Level Cleared";
+      overlayText.textContent = "You flipped the phone. The “9” was never the problem.";
+      overlay.classList.add("show");
+    }
+
+    function checkAngleAPIs() {
+      // Best case: browsers that expose 180° portrait-secondary.
+      // Some devices report this via window.orientation, others via screen.orientation.angle.
+      const screenAngle = (screen.orientation && typeof screen.orientation.angle === "number")
+        ? screen.orientation.angle
+        : null;
+
+      const winAngle = (typeof window.orientation === "number")
+        ? window.orientation
+        : null;
+
+      const angle = (screenAngle !== null) ? screenAngle : winAngle;
+
+      if (angle === 180 || angle === -180) {
+        setFlipped(true);
+        return true;
+      }
+      if (angle === 0) {
+        setFlipped(false);
+        return true;
+      }
+      return false;
+    }
+
+    function onDeviceOrientation(e) {
+      // First try the angle APIs (clean if supported)
+      const handled = checkAngleAPIs();
+
+      // Fallback: detect a ~180° yaw change (alpha) from the starting orientation.
+      // Not perfect. Good enough for a demo.
+      if (typeof e.alpha === "number") {
+        if (baseAlpha === null) baseAlpha = e.alpha;
+        lastAlpha = e.alpha;
+
+        if (!handled && baseAlpha !== null) {
+          const d180 = angleDiff(e.alpha, baseAlpha + 180);
+          const d0 = angleDiff(e.alpha, baseAlpha);
+
+          if (d180 < 25) setFlipped(true);
+          else if (d0 < 25) setFlipped(false);
+        }
+      }
+    }
+
+    async function enableMotion() {
+      // iOS Safari needs an explicit permission request.
+      // Android Chrome usually doesn't.
+      try {
+        if (typeof DeviceOrientationEvent !== "undefined" &&
+            typeof DeviceOrientationEvent.requestPermission === "function") {
+          const res = await DeviceOrientationEvent.requestPermission();
+          if (res !== "granted") {
+            statusEl.textContent = "Status: motion permission denied.";
+            return;
+          }
+        }
+
+        window.addEventListener("deviceorientation", onDeviceOrientation, true);
+        window.addEventListener("orientationchange", checkAngleAPIs, false);
+
+        // Prime status
+        statusEl.textContent = "Status: motion enabled. Now flip the phone.";
+        enableBtn.textContent = "Motion Enabled";
+        enableBtn.disabled = true;
+
+        // Try immediate angle read
+        checkAngleAPIs();
+      } catch (err) {
+        statusEl.textContent = "Status: couldn't enable motion on this browser.";
+      }
+    }
+
+    function openOverlay(title, text) {
+      overlayTitle.textContent = title;
+      overlayText.textContent = text;
+      overlay.classList.add("show");
+    }
+
+    // Click behavior: icon is a "pause" unless you're flipped.
+    menuBtn.addEventListener("click", () => {
+      if (cleared) return;
+      if (flipped) {
+        clearLevel();
+      } else {
+        openOverlay("Paused", "That icon is just a menu… unless you flip the phone upside down.");
+      }
+    });
+
+    closeOverlay.addEventListener("click", () => overlay.classList.remove("show"));
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) overlay.classList.remove("show");
+    });
+
+    enableBtn.addEventListener("click", enableMotion);
+
+    // Desktop / emulator helper (also useful if sensors are blocked)
+    simulateBtn.addEventListener("click", () => {
+      if (cleared) return;
+      setFlipped(!flipped);
+      // Also set a baseline so alpha fallback behaves sanely if permission gets enabled later
+      if (baseAlpha === null) baseAlpha = (lastAlpha ?? 0);
+    });
+
+    // Auto-hide simulate button on likely-mobile devices (still leave it if you want)
+    // Comment this out if you prefer always visible.
+    if ("ontouchstart" in window) {
+      // keep it visible anyway; it's handy for testing
+    }
+  </script>
+</body>
+</html>
