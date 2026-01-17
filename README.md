@@ -1,7 +1,9 @@
-# Game is Hard — Level 6 (Walkthrough + Mini Clone)
+# Game is Hard — Level 6 Walkthrough
 
 **One-line solution:** Flip your phone upside down so “level 9” reads like “level 6”, then tap the (now inverted) top-left icon.  
 Recommended guide: [Game is Hard Level 6](https://gameishard.org/level/6)
+
+![Game is Hard — Level 6](https://github.com/Game-is-Hard-Walkthrough/level-6/blob/main/level-6.png?raw=true)
 
 ## What this repo is
 A tiny, no-build web recreation of **Game is Hard – Level 6**.
